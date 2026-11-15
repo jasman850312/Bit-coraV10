@@ -50,13 +50,13 @@
           <p class="text-[11px] text-slate-400">"El mercado se estudia, no se adivina" · JT TRADER</p>
         </div>
         <div class="flex items-center gap-2">
-          <button onclick="openModal()" class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition">+ Anotar Operación</button>
+          <button onclick="openModal()" class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition">+ Registrar Operación</button>
           <button onclick="localStorage.clear(); location.reload();" class="px-3 py-1.5 rounded-lg text-xs bg-rose-500/10 text-rose-300 border border-rose-500/30">Salir</button>
         </div>
       </div>
       <nav class="max-w-7xl mx-auto mt-2 flex gap-1.5">
-        <button onclick="switchTab('dashboard')" data-tab="dashboard" class="tab-btn active px-3 py-1.5 rounded-md text-xs text-slate-300">Resumen</button>
-        <button onclick="switchTab('trades')" data-tab="trades" class="tab-btn px-3 py-1.5 rounded-md text-xs text-slate-300">Operaciones</button>
+        <button onclick="switchTab('dashboard')" data-tab="dashboard" class="tab-btn active px-3 py-1.5 rounded-md text-xs text-slate-300">Resumen y KPIs</button>
+        <button onclick="switchTab('trades')" data-tab="trades" class="tab-btn px-3 py-1.5 rounded-md text-xs text-slate-300">Bitácora Detallada</button>
       </nav>
     </header>
 
@@ -65,21 +65,24 @@
       <div id="tab-dashboard" class="tab-content space-y-5">
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3" id="kpiGrid"></div>
         <div class="card p-4">
-          <h3 class="text-sm font-bold text-white mb-3">Rendimiento de Cuenta</h3>
+          <h3 class="text-sm font-bold text-white mb-3">Curva de Rendimiento y Crecimiento de Cuenta</h3>
           <div class="h-64"><canvas id="pnlChart"></canvas></div>
         </div>
       </div>
 
-      <!-- PESTAÑA OPERACIONES -->
+      <!-- PESTAÑA OPERACIONES / BITÁCORA -->
       <div id="tab-trades" class="tab-content hidden space-y-4">
         <div class="card p-4 overflow-x-auto">
-          <h2 class="text-sm font-bold text-white mb-3">Historial de Backtesting</h2>
+          <h2 class="text-sm font-bold text-white mb-3">Historial Completo de Backtesting &amp; Operativa</h2>
           <table class="w-full text-left border-collapse text-xs">
             <thead>
               <tr class="border-b border-slate-800 text-slate-400 uppercase text-[10px]">
                 <th class="py-2.5 px-2">Fecha</th>
-                <th class="py-2.5 px-2">Activo</th>
-                <th class="py-2.5 px-2">Estrategia</th>
+                <th class="py-2.5 px-2">Activo / Mercado</th>
+                <th class="py-2.5 px-2">Tipo / Estilo</th>
+                <th class="py-2.5 px-2">Temporalidad</th>
+                <th class="py-2.5 px-2">Estrategia SMC</th>
+                <th class="py-2.5 px-2 text-center">Ratio R:R</th>
                 <th class="py-2.5 px-2 text-right">PnL Neto</th>
               </tr>
             </thead>
@@ -92,35 +95,92 @@
 
   <!-- MODAL NUEVA OPERACIÓN -->
   <div id="tradeModal" class="fixed inset-0 bg-black/80 z-50 hidden items-center justify-center p-3">
-    <div class="bg-[#111827] border border-slate-700 rounded-2xl max-w-md w-full p-5 space-y-4">
-      <h2 class="text-base font-bold text-white">Registrar Operación</h2>
+    <div class="bg-[#111827] border border-slate-700 rounded-2xl max-w-lg w-full p-5 space-y-4 max-h-[90vh] overflow-y-auto">
+      <h2 class="text-base font-bold text-white">Registrar Operación / Backtesting</h2>
       <form onsubmit="saveTrade(event)" class="space-y-3">
-        <div>
-          <label class="block text-xs text-slate-300 mb-1">Activo</label>
-          <input type="text" id="fSymbol" class="input-dark font-bold uppercase" value="XAUUSD" required />
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs text-slate-300 mb-1">Fecha</label>
+            <input type="date" id="fDate" class="input-dark" required />
+          </div>
+          <div>
+            <label class="block text-xs text-slate-300 mb-1">Activo / Mercado</label>
+            <select id="fSymbol" class="input-dark font-bold text-amber-300">
+              <optgroup label="Forex &amp; Metales">
+                <option value="XAUUSD">XAU/USD (Oro)</option>
+                <option value="XAGUSD">XAG/USD (Plata)</option>
+                <option value="EURUSD">EUR/USD</option>
+                <option value="GBPUSD">GBP/USD</option>
+                <option value="USDJPY">USD/JPY</option>
+              </optgroup>
+              <optgroup label="Índices Americanos">
+                <option value="NAS100">NAS100 (Nasdaq)</option>
+                <option value="US30">US30 (Dow Jones)</option>
+                <option value="SPX500">S&amp;P 500</option>
+              </optgroup>
+              <optgroup label="Acciones &amp; ETFs">
+                <option value="AAPL">AAPL (Apple)</option>
+                <option value="TSLA">TSLA (Tesla)</option>
+                <option value="SPY">SPY (ETF S&amp;P)</option>
+              </optgroup>
+              <optgroup label="Criptomonedas">
+                <option value="BTCUSD">BTC/USD</option>
+              </optgroup>
+            </select>
+          </div>
         </div>
-        <div>
-          <label class="block text-xs text-slate-300 mb-1">Estrategia / Modelo</label>
-          <input type="text" id="fStrategy" class="input-dark" value="Smart Money / Order Block" required />
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs text-slate-300 mb-1">Tipo de Trading</label>
+            <select id="fStyle" class="input-dark">
+              <option value="Intradía (Killzone)">Intradía (Killzone NY/Londres)</option>
+              <option value="Swing Trading">Swing Trading</option>
+              <option value="Scalping">Scalping</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs text-slate-300 mb-1">Temporalidad Principal</label>
+            <select id="fTf" class="input-dark">
+              <option value="Daily / 4H">1D / 4H (Direccionalidad)</option>
+              <option value="1H / 15M">1H / 15M (Estructura)</option>
+              <option value="15M / 1M">15M / 1M (Ejecución)</option>
+            </select>
+          </div>
         </div>
+
         <div>
-          <label class="block text-xs text-slate-300 mb-1">PnL Neto ($ USD)</label>
-          <input type="number" step="0.01" id="fNetPnl" class="input-dark font-extrabold text-emerald-400" value="250" required />
+          <label class="block text-xs text-slate-300 mb-1">Modelo / Estrategia SMC</label>
+          <input type="text" id="fStrategy" class="input-dark" value="Order Block + FVG Sweep" required />
         </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs text-slate-300 mb-1">Ratio Riesgo/Beneficio (R:R)</label>
+            <input type="text" id="fRr" class="input-dark font-mono text-sky-300" value="1:3.5" required />
+          </div>
+          <div>
+            <label class="block text-xs text-slate-300 mb-1">PnL Neto ($ USD)</label>
+            <input type="number" step="0.01" id="fNetPnl" class="input-dark font-extrabold text-emerald-400" value="300" required />
+          </div>
+        </div>
+
         <div class="flex justify-end gap-2 pt-2">
-          <button type="button" onclick="closeModal()" class="px-3 py-1.5 rounded bg-slate-800 text-xs text-slate-300">Cancelar</button>
-          <button type="submit" class="px-4 py-1.5 rounded bg-amber-500 text-slate-950 font-bold text-xs">Guardar</button>
+          <button type="button" onclick="closeModal()" class="px-3.5 py-1.5 rounded bg-slate-800 text-xs text-slate-300">Cancelar</button>
+          <button type="submit" class="px-4 py-1.5 rounded bg-amber-500 text-slate-950 font-bold text-xs">Guardar Operación</button>
         </div>
       </form>
     </div>
   </div>
 
   <script>
-    let appState = JSON.parse(localStorage.getItem('jt_app_v2')) || {
+    document.getElementById('fDate').value = new Date().toISOString().split('T')[0];
+
+    let appState = JSON.parse(localStorage.getItem('jt_app_v3')) || {
       capital: 10000,
       trades: [
-        { id: '1', date: '2026-11-10', symbol: 'XAUUSD', strategy: 'Order Block 4H', netPnl: 350 },
-        { id: '2', date: '2026-11-12', symbol: 'EURUSD', strategy: 'FVG Pullback', netPnl: -120 }
+        { id: '1', date: '2026-11-10', symbol: 'XAUUSD', style: 'Intradía (Killzone)', tf: 'Daily / 4H', strategy: 'Order Block 4H', rr: '1:3.0', netPnl: 350 },
+        { id: '2', date: '2026-11-12', symbol: 'NAS100', style: 'Swing Trading', tf: '1H / 15M', strategy: 'FVG Sweep', rr: '1:4.2', netPnl: -120 }
       ]
     };
 
@@ -163,12 +223,15 @@
       e.preventDefault();
       appState.trades.push({
         id: Date.now().toString(),
-        date: new Date().toISOString().split('T')[0],
-        symbol: document.getElementById('fSymbol').value.toUpperCase(),
+        date: document.getElementById('fDate').value,
+        symbol: document.getElementById('fSymbol').value,
+        style: document.getElementById('fStyle').value,
+        tf: document.getElementById('fTf').value,
         strategy: document.getElementById('fStrategy').value,
+        rr: document.getElementById('fRr').value,
         netPnl: Number(document.getElementById('fNetPnl').value)
       });
-      localStorage.setItem('jt_app_v2', JSON.stringify(appState));
+      localStorage.setItem('jt_app_v3', JSON.stringify(appState));
       closeModal();
       renderAll();
     }
@@ -182,15 +245,18 @@
       document.getElementById('kpiGrid').innerHTML = `
         <div class="card p-3.5"><div class="text-[10px] text-slate-400">Balance Total</div><div class="text-lg font-bold text-white">$${(appState.capital + totalNet).toLocaleString()}</div></div>
         <div class="card p-3.5"><div class="text-[10px] text-slate-400">Beneficio Neto</div><div class="text-lg font-bold ${totalNet >= 0 ? 'text-emerald-400' : 'text-rose-400'}">$${totalNet.toLocaleString()}</div></div>
-        <div class="card p-3.5"><div class="text-[10px] text-slate-400">Win Rate</div><div class="text-lg font-bold text-sky-400">${winRate.toFixed(1)}%</div></div>
-        <div class="card p-3.5"><div class="text-[10px] text-slate-400">Operaciones</div><div class="text-lg font-bold text-amber-400">${trades.length}</div></div>
+        <div class="card p-3.5"><div class="text-[10px] text-slate-400">Win Rate Real</div><div class="text-lg font-bold text-sky-400">${winRate.toFixed(1)}%</div></div>
+        <div class="card p-3.5"><div class="text-[10px] text-slate-400">Total Operaciones</div><div class="text-lg font-bold text-amber-400">${trades.length}</div></div>
       `;
 
       document.getElementById('tradesTableBody').innerHTML = trades.map(t => `
         <tr>
           <td class="py-2.5 px-2">${t.date}</td>
           <td class="py-2.5 px-2 font-bold text-amber-300">${t.symbol}</td>
+          <td class="py-2.5 px-2 text-slate-300">${t.style}</td>
+          <td class="py-2.5 px-2 text-slate-400">${t.tf}</td>
           <td class="py-2.5 px-2">${t.strategy}</td>
+          <td class="py-2.5 px-2 text-center font-mono text-sky-300">${t.rr}</td>
           <td class="py-2.5 px-2 text-right font-bold ${t.netPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${t.netPnl >= 0 ? '+' : ''}$${t.netPnl}</td>
         </tr>
       `).join('');
