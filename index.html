@@ -5,15 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TRADING JOURNAL PRO — JT TRADER</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body { background-color: #090d16; color: #e2e8f0; font-family: 'Inter', system-ui, sans-serif; }
     .card { background: #111827; border: 1px solid #1e293b; border-radius: 0.75rem; }
-    .input-dark { background: #0f172a; border: 1px solid #334155; color: #f8fafc; border-radius: 0.5rem; padding: 0.75rem; font-size: 0.875rem; width: 100%; }
+    .input-dark { background: #0f172a; border: 1px solid #334155; color: #f8fafc; border-radius: 0.5rem; padding: 0.65rem 0.75rem; font-size: 0.875rem; width: 100%; }
+    .tab-btn.active { background: #f59e0b; color: #090d16; font-weight: 700; }
   </style>
 </head>
 <body class="min-h-screen flex flex-col">
 
-  <!-- LICENCIA -->
+  <!-- ACCESO POR LICENCIA -->
   <div id="licenseGate" class="fixed inset-0 bg-[#060911] z-50 flex items-center justify-center p-4">
     <div class="bg-[#111827] border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-5 shadow-2xl">
       <div class="flex items-center gap-3">
@@ -24,7 +26,7 @@
         </div>
       </div>
       <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 text-xs text-slate-300">
-        Administrador: <strong>JT-ADMIN-2026</strong>
+        Clave de Administrador: <strong>JT-ADMIN-2026</strong>
       </div>
       <div id="errorMsg" class="hidden text-rose-400 text-xs font-bold">Clave incorrecta. Usa JT-ADMIN-2026</div>
       <div class="space-y-3">
@@ -37,41 +39,199 @@
   </div>
 
   <!-- APLICACIÓN PRINCIPAL -->
-  <div id="appContainer" class="hidden min-h-screen flex-col p-6 space-y-6">
-    <header class="flex justify-between items-center border-b border-slate-800 pb-4">
-      <div>
-        <h1 class="text-xl font-bold text-white">JT TRADER — Bitácora Activa</h1>
-        <p class="text-xs text-emerald-400 font-semibold">Licencia Autorizada y Conectada</p>
+  <div id="appContainer" class="hidden min-h-screen flex-col">
+    <header class="bg-[#0d1320] border-b border-slate-800 sticky top-0 z-30 px-4 py-3">
+      <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 class="text-base md:text-lg font-bold text-white flex items-center gap-2">
+            TRADING JOURNAL PRO
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">LICENCIA ACTIVA</span>
+          </h1>
+          <p class="text-[11px] text-slate-400">"El mercado se estudia, no se adivina" · JT TRADER</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="openModal()" class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition">+ Anotar Operación</button>
+          <button onclick="localStorage.clear(); location.reload();" class="px-3 py-1.5 rounded-lg text-xs bg-rose-500/10 text-rose-300 border border-rose-500/30">Salir</button>
+        </div>
       </div>
-      <button onclick="localStorage.clear(); location.reload();" class="px-3 py-1.5 bg-rose-500/20 text-rose-300 border border-rose-500/30 rounded text-xs">Cerrar Sesión</button>
+      <nav class="max-w-7xl mx-auto mt-2 flex gap-1.5">
+        <button onclick="switchTab('dashboard')" data-tab="dashboard" class="tab-btn active px-3 py-1.5 rounded-md text-xs text-slate-300">Resumen</button>
+        <button onclick="switchTab('trades')" data-tab="trades" class="tab-btn px-3 py-1.5 rounded-md text-xs text-slate-300">Operaciones</button>
+      </nav>
     </header>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div class="card p-5">
-        <h3 class="text-xs text-slate-400 uppercase">Capital Inicial</h3>
-        <p class="text-2xl font-bold text-white mt-1">$10,000.00 USD</p>
+
+    <main class="max-w-7xl w-full mx-auto px-4 py-5 flex-1 space-y-5">
+      <!-- PESTAÑA RESUMEN -->
+      <div id="tab-dashboard" class="tab-content space-y-5">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3" id="kpiGrid"></div>
+        <div class="card p-4">
+          <h3 class="text-sm font-bold text-white mb-3">Rendimiento de Cuenta</h3>
+          <div class="h-64"><canvas id="pnlChart"></canvas></div>
+        </div>
       </div>
-      <div class="card p-5">
-        <h3 class="text-xs text-slate-400 uppercase">Estado del Sistema</h3>
-        <p class="text-2xl font-bold text-emerald-400 mt-1">Operativo</p>
+
+      <!-- PESTAÑA OPERACIONES -->
+      <div id="tab-trades" class="tab-content hidden space-y-4">
+        <div class="card p-4 overflow-x-auto">
+          <h2 class="text-sm font-bold text-white mb-3">Historial de Backtesting</h2>
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="border-b border-slate-800 text-slate-400 uppercase text-[10px]">
+                <th class="py-2.5 px-2">Fecha</th>
+                <th class="py-2.5 px-2">Activo</th>
+                <th class="py-2.5 px-2">Estrategia</th>
+                <th class="py-2.5 px-2 text-right">PnL Neto</th>
+              </tr>
+            </thead>
+            <tbody id="tradesTableBody" class="divide-y divide-slate-800/60"></tbody>
+          </table>
+        </div>
       </div>
-      <div class="card p-5">
-        <h3 class="text-xs text-slate-400 uppercase">Metodología</h3>
-        <p class="text-xl font-bold text-amber-400 mt-1">Smart Money Concepts</p>
-      </div>
+    </main>
+  </div>
+
+  <!-- MODAL NUEVA OPERACIÓN -->
+  <div id="tradeModal" class="fixed inset-0 bg-black/80 z-50 hidden items-center justify-center p-3">
+    <div class="bg-[#111827] border border-slate-700 rounded-2xl max-w-md w-full p-5 space-y-4">
+      <h2 class="text-base font-bold text-white">Registrar Operación</h2>
+      <form onsubmit="saveTrade(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs text-slate-300 mb-1">Activo</label>
+          <input type="text" id="fSymbol" class="input-dark font-bold uppercase" value="XAUUSD" required />
+        </div>
+        <div>
+          <label class="block text-xs text-slate-300 mb-1">Estrategia / Modelo</label>
+          <input type="text" id="fStrategy" class="input-dark" value="Smart Money / Order Block" required />
+        </div>
+        <div>
+          <label class="block text-xs text-slate-300 mb-1">PnL Neto ($ USD)</label>
+          <input type="number" step="0.01" id="fNetPnl" class="input-dark font-extrabold text-emerald-400" value="250" required />
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeModal()" class="px-3 py-1.5 rounded bg-slate-800 text-xs text-slate-300">Cancelar</button>
+          <button type="submit" class="px-4 py-1.5 rounded bg-amber-500 text-slate-950 font-bold text-xs">Guardar</button>
+        </div>
+      </form>
     </div>
   </div>
 
   <script>
+    let appState = JSON.parse(localStorage.getItem('jt_app_v2')) || {
+      capital: 10000,
+      trades: [
+        { id: '1', date: '2026-11-10', symbol: 'XAUUSD', strategy: 'Order Block 4H', netPnl: 350 },
+        { id: '2', date: '2026-11-12', symbol: 'EURUSD', strategy: 'FVG Pullback', netPnl: -120 }
+      ]
+    };
+
+    let chartInstance = null;
+
     function validarLicencia() {
       const val = document.getElementById('keyInput').value.trim().toUpperCase();
       if (val === 'JT-ADMIN-2026' || val.startsWith('JT-')) {
-        document.getElementById('licenseGate').style.display = 'none';
-        const app = document.getElementById('appContainer');
-        app.classList.remove('hidden');
-        app.style.display = 'flex';
+        localStorage.setItem('jt_auth', 'true');
+        unlockApp();
       } else {
         document.getElementById('errorMsg').classList.remove('hidden');
       }
+    }
+
+    function unlockApp() {
+      document.getElementById('licenseGate').style.display = 'none';
+      const app = document.getElementById('appContainer');
+      app.classList.remove('hidden');
+      app.style.display = 'flex';
+      renderAll();
+    }
+
+    if (localStorage.getItem('jt_auth') === 'true') {
+      unlockApp();
+    }
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById('tab-' + tab).classList.remove('hidden');
+      document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+      if(tab === 'dashboard') renderChart();
+    }
+
+    function openModal() { document.getElementById('tradeModal').classList.remove('hidden'); document.getElementById('tradeModal').classList.add('flex'); }
+    function closeModal() { document.getElementById('tradeModal').classList.add('hidden'); }
+
+    function saveTrade(e) {
+      e.preventDefault();
+      appState.trades.push({
+        id: Date.now().toString(),
+        date: new Date().toISOString().split('T')[0],
+        symbol: document.getElementById('fSymbol').value.toUpperCase(),
+        strategy: document.getElementById('fStrategy').value,
+        netPnl: Number(document.getElementById('fNetPnl').value)
+      });
+      localStorage.setItem('jt_app_v2', JSON.stringify(appState));
+      closeModal();
+      renderAll();
+    }
+
+    function renderAll() {
+      const trades = appState.trades;
+      const totalNet = trades.reduce((a, b) => a + b.netPnl, 0);
+      const wins = trades.filter(t => t.netPnl > 0).length;
+      const winRate = trades.length ? (wins / trades.length) * 100 : 0;
+
+      document.getElementById('kpiGrid').innerHTML = `
+        <div class="card p-3.5"><div class="text-[10px] text-slate-400">Balance Total</div><div class="text-lg font-bold text-white">$${(appState.capital + totalNet).toLocaleString()}</div></div>
+        <div class="card p-3.5"><div class="text-[10px] text-slate-400">Beneficio Neto</div><div class="text-lg font-bold ${totalNet >= 0 ? 'text-emerald-400' : 'text-rose-400'}">$${totalNet.toLocaleString()}</div></div>
+        <div class="card p-3.5"><div class="text-[10px] text-slate-400">Win Rate</div><div class="text-lg font-bold text-sky-400">${winRate.toFixed(1)}%</div></div>
+        <div class="card p-3.5"><div class="text-[10px] text-slate-400">Operaciones</div><div class="text-lg font-bold text-amber-400">${trades.length}</div></div>
+      `;
+
+      document.getElementById('tradesTableBody').innerHTML = trades.map(t => `
+        <tr>
+          <td class="py-2.5 px-2">${t.date}</td>
+          <td class="py-2.5 px-2 font-bold text-amber-300">${t.symbol}</td>
+          <td class="py-2.5 px-2">${t.strategy}</td>
+          <td class="py-2.5 px-2 text-right font-bold ${t.netPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${t.netPnl >= 0 ? '+' : ''}$${t.netPnl}</td>
+        </tr>
+      `).join('');
+
+      renderChart();
+    }
+
+    function renderChart() {
+      const ctx = document.getElementById('pnlChart').getContext('2d');
+      let runningBal = appState.capital;
+      const labels = ['Inicio', ...appState.trades.map(t => t.date)];
+      const data = [appState.capital];
+      appState.trades.forEach(t => {
+        runningBal += t.netPnl;
+        data.push(runningBal);
+      });
+
+      if(chartInstance) chartInstance.destroy();
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Balance ($ USD)',
+            data: data,
+            borderColor: '#f59e0b',
+            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+            fill: true,
+            tension: 0.2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', font: { size: 10 } } },
+            y: { grid: { color: '#1e293b' }, ticks: { color: '#94a3b8', font: { size: 10 } } }
+          }
+        }
+      });
     }
   </script>
 </body>
