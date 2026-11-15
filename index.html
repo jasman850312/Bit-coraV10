@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TRADING JOURNAL PRO — JT TRADER</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background-color: #090d16; color: #e2e8f0; font-family: 'Inter', system-ui, sans-serif; }
+    .card { background: #111827; border: 1px solid #1e293b; border-radius: 0.75rem; }
+    .input-dark { background: #0f172a; border: 1px solid #334155; color: #f8fafc; border-radius: 0.5rem; padding: 0.75rem; font-size: 0.875rem; width: 100%; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- LICENCIA -->
+  <div id="licenseGate" class="fixed inset-0 bg-[#060911] z-50 flex items-center justify-center p-4">
+    <div class="bg-[#111827] border border-slate-800 rounded-2xl max-w-md w-full p-6 space-y-5 shadow-2xl">
+      <div class="flex items-center gap-3">
+        <div class="w-14 h-14 rounded-full bg-amber-500/20 border-2 border-amber-500 flex items-center justify-center text-amber-400 font-extrabold text-lg">JT</div>
+        <div>
+          <h1 class="text-lg font-extrabold text-white">TRADING JOURNAL PRO</h1>
+          <p class="text-xs text-amber-400 font-semibold">Edición Oficial · JT TRADER</p>
+        </div>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 text-xs text-slate-300">
+        Administrador: <strong>JT-ADMIN-2026</strong>[span_0](start_span)[span_0](end_span)
+      </div>
+      <div id="errorMsg" class="hidden text-rose-400 text-xs font-bold">Clave incorrecta. Usa JT-ADMIN-2026[span_1](start_span)[span_1](end_span)</div>
+      <div class="space-y-3">
+        <input type="text" id="keyInput" class="input-dark font-mono uppercase text-center text-amber-300 font-bold" placeholder="JT-ADMIN-2026[span_2](start_span)"[span_2](end_span) />
+        <button onclick="validarLicencia()" class="w-full py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold text-xs shadow-lg">
+          Entrar al Proyecto
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- APLICACIÓN PRINCIPAL -->
+  <div id="appContainer" class="hidden min-h-screen flex-col p-6 space-y-6">
+    <header class="flex justify-between items-center border-b border-slate-800 pb-4">
+      <div>
+        <h1 class="text-xl font-bold text-white">JT TRADER — Bitácora Activa</h1>
+        <p class="text-xs text-emerald-400 font-semibold">Licencia Autorizada y Conectada</p>
+      </div>
+      <button onclick="localStorage.clear(); location.reload();" class="px-3 py-1.5 bg-rose-500/20 text-rose-300 border border-rose-500/30 rounded text-xs">Cerrar Sesión</button>
+    </header>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="card p-5">
+        <h3 class="text-xs text-slate-400 uppercase">Capital Inicial</h3>
+        <p class="text-2xl font-bold text-white mt-1">$10,000.00 USD</p>
+      </div>
+      <div class="card p-5">
+        <h3 class="text-xs text-slate-400 uppercase">Estado del Sistema</h3>
+        <p class="text-2xl font-bold text-emerald-400 mt-1">Operativo</p>
+      </div>
+      <div class="card p-5">
+        <h3 class="text-xs text-slate-400 uppercase">Metodología</h3>
+        <p class="text-xl font-bold text-amber-400 mt-1">Smart Money Concepts</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function validarLicencia() {
+      const val = document.getElementById('keyInput').value.trim().toUpperCase();
+      if (val === 'JT-ADMIN-2026' || val.startsWith('JT-')) {
+        document.getElementById('licenseGate').style.display = 'none';
+        const app = document.getElementById('appContainer');
+        app.classList.remove('hidden');
+        app.style.display = 'flex';
+      } else {
+        document.getElementById('errorMsg').classList.remove('hidden');
+      }
+    }
+  </script>
+</body>
+</html>
